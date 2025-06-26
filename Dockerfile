@@ -1,5 +1,4 @@
-FROM eclipse-temurin:17-jre-alpine
-
+FROM eclipse-temurin:21
 LABEL org.opencontainers.image.vendor="Dockcenter"
 LABEL org.opencontainers.image.title="Velocity"
 LABEL org.opencontainers.image.description="Automatically built Docker image for Velocity"
