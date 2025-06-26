@@ -1,4 +1,5 @@
-FROM eclipse-temurin:21
+FROM eclipse-temurin:21-jre-alpine
+
 LABEL org.opencontainers.image.vendor="Dockcenter"
 LABEL org.opencontainers.image.title="Velocity"
 LABEL org.opencontainers.image.description="Automatically built Docker image for Velocity"
@@ -11,12 +12,11 @@ ENV JAVA_FLAGS="-XX:+UseStringDeduplication -XX:+UseG1GC -XX:G1HeapRegionSize=4M
 
 WORKDIR /data
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends openssl && \
-    rm -rf /var/lib/apt/lists/* && \
-    addgroup --system velocity && \
-    adduser --system --ingroup velocity --shell /bin/sh velocity && \
-    chown velocity:velocity /data
+RUN mkdir -p /data && \
+    apk add --upgrade --no-cache openssl && \
+    addgroup -g ${VELOCITY_PGID:-1003} -S velocity && \
+    adduser -u ${VELOCITY_PUID:-1002} -S velocity -G velocity && \
+    chown -R velocity:velocity /data
 
 USER velocity
 
@@ -24,11 +24,6 @@ VOLUME /data
 
 EXPOSE 25577
 
-# Ensure the /opt/velocity directory exists and has the correct permissions
-# before copying the jar file.
-RUN mkdir -p /opt/velocity && \
-    chown -R velocity:velocity /opt/velocity
+COPY velocity/velocity-*.jar /opt/velocity/velocity.jar
 
-COPY --chown=velocity velocity/velocity-*.jar /opt/velocity/velocity.jar
-
-ENTRYPOINT ["java", "-Xms$JAVA_MEMORY", "-Xmx$JAVA_MEMORY", "$JAVA_FLAGS", "-jar", "/opt/velocity/velocity.jar"]
+ENTRYPOINT java -Xms$JAVA_MEMORY -Xmx$JAVA_MEMORY $JAVA_FLAGS -jar /opt/velocity/velocity.jar
